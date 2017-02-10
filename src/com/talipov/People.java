@@ -1,8 +1,7 @@
 package com.talipov;
 
-import org.w3c.dom.DOMImplementation;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+import org.w3c.dom.*;
+import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -102,8 +101,6 @@ public class People {
             tr.setOutputProperty(OutputKeys.INDENT, "yes");
             tr.setOutputProperty(OutputKeys.METHOD, "xml");
             tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            tr.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, "roles.dtd");
-            tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 
             // send DOM to file
             tr.transform(new DOMSource(doc),
@@ -115,4 +112,45 @@ public class People {
             System.out.println(ioe.getMessage());
         }
     };
+
+    public void deserialize(String filename) {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance(); //создали фабрику строителей, сложный и грамосткий процесс (по реже выполняйте это действие)
+        // f.setValidating(false); // не делать проверку валидации
+        DocumentBuilder db = null; // создали конкретного строителя документа
+        try {
+            db = dbf.newDocumentBuilder();
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        }
+        Document doc = null; // стооитель построил документ
+        try {
+            doc = db.parse(new File(filename));
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        //Document - тоже является нодом, и импленментирует методы
+        visit(doc, 0);
+    }
+
+    public void visit(Node node, int level) {
+        NodeList list = node.getChildNodes();
+
+        Node childNode = list.item(0); // объект
+        NodeList fields = childNode.getChildNodes();
+
+        name = fields.item(1).getAttributes().getNamedItem("value").getNodeValue();
+        age = Integer.parseInt(
+                fields.item(3).getAttributes().getNamedItem("value").getNodeValue()
+        );
+        salary = Double.parseDouble(
+                fields.item(5).getAttributes().getNamedItem("value").getNodeValue()
+        );
+    }
+
+    @Override
+    public String toString() {
+        return "Name: " + name + " Age: " + age + " Salaray: " + salary;
+    }
 }
